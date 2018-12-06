@@ -1,0 +1,10 @@
+{% extends "base.html"%}
+{%block title_block %}<title>Encrypt</title>{% endblock %}
+{% block body_block %}
+	<h2>Upload the file to encrypt</h2>
+	<form method="post" enctype="multipart/form-data">
+		{%csrf_token%}
+		<input type="file" name="document">
+		<button type="submit">Upload File</button>
+	</form>
+{% endblock %}

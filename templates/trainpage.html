@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block "title_block"%} 
+<title>Train</title>
+{% endblock%}
+
+
+{% block body_block %}
+<body onload="init();">
+    <!--Import jQuery before materialize.js-->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    {% load staticfiles %}
+  <script src="{% static "js/materialize.min.js" %}"></script>
+      
+      <div class="container">
+            <div class="card center" style="padding-left: 340px;">
+ 
+                    <div class="card-content">
+                              <div class="card-action">
+                        <button class="btn btn-default " onclick="startWebcam();" style="margin-bottom: 5px; margin-top: 5px; width: 100px">Camera</button>
+                        <button class="btn btn-default" onclick="snapshot();" style="margin-bottom: 5px; margin-top: 5px;width: 100px">Train  </button>
+                    </div><br><br>
+                            <div class="input-field col s6">
+                                    <input placeholder="Enter Name" type="text" class="validate" id="ip">
+                            </div>
+                            <br><br>
+                            <p>
+                                <video onclick="snapshot(this);" width=300 height=300 id="video" controls autoplay></video>
+                                <br>
+                                <canvas  id="myCanvas" width="300" height="220"></canvas>
+                            </p>
+                    </div>
+
+                  </div>
+      </div>
+  </body>
+  <script type="text/javascript">
+    //--------------------
+    // GET USER MEDIA CODE
+    //--------------------
+        navigator.getUserMedia = ( navigator.getUserMedia ||
+                           navigator.webkitGetUserMedia ||
+                           navigator.mozGetUserMedia ||
+                           navigator.msGetUserMedia);
+    var video;
+    var webcamStream;
+    function startWebcam() {
+      if (navigator.getUserMedia) {
+         navigator.getUserMedia (
+            // constraints
+            {
+               video: true,
+               audio: false
+            },
+            // successCallback
+            function(localMediaStream) {
+                video = document.querySelector('video');
+               video.src = window.URL.createObjectURL(localMediaStream);
+               webcamStream = localMediaStream;
+            },
+            // errorCallback
+            function(err) {
+               console.log("The following error occured: " + err);
+            }
+         );
+      } else {
+         console.log("getUserMedia not supported");
+      }  
+    }
+    //---------------------
+    // TAKE A SNAPSHOT CODE
+    //---------------------
+    var canvas, ctx;
+    function init() {
+      // Get the canvas and obtain a context for
+      // drawing in it
+      canvas = document.getElementById("myCanvas");
+      ctx = canvas.getContext('2d');
+    }
+    function snapshot() {
+      
+      ctx.drawImage(video, 0,0, canvas.width, canvas.height);
+      var img1 = new Image();
+      img1.src = canvas.toDataURL();
+      var ip = document.getElementById('ip').value;
+      datad = "{\r\n    \"image\":\"" + img1.src+ "\",\r\n    \"subject_id\":\"" + ip + "\",\r\n    \"gallery_name\":\"Arti\"\r\n}";
+      var settings = {
+          "async": true,
+          "crossDomain": true,
+          "url": "https://api.kairos.com/enroll",
+          "method": "POST",
+          "headers": {
+              "content-type": "application/json",
+              "app_id": "fee603f3",
+              "app_key": "d43e26b5a87fae423d09851f347871b4",
+              "cache-control": "no-cache"
+          },
+          "processData": false,
+          "data": datad
+      }
+      $.ajax(settings).done(function (response) {
+        //
+        if((response.images[0].transaction.status) == "success"){
+            Materialize.toast("Image Trained succesfully by name " +response.images[0].transaction.subject_id+ " in gallery name " +response.images[0].transaction.gallery_name, 4000);
+            console.log(response.images[0].transaction.subject_id);
+            window.alert("Trained succesfully");
+            window.location.href = 'http://127.0.0.1:8000/base_app/login/main/';
+        }
+        else{
+            Materialize.toast("Unable to Train Image", 4000);
+            window.alert("Error");
+            window.location.href = 'http://127.0.0.1:8000/base_app/login/main/';
+        }
+      });
+      //console.log(img1.src);
+    }
+</script>
+{% endblock %}
